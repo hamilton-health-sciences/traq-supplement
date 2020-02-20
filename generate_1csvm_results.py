@@ -16,16 +16,19 @@ def extract_labelled_data(pvalues, mmd_features, anomalous_centres):
 
     pvalues['variable_test'] = pvalues['variable'] + '_' + pvalues['test']
     X_pvalues_ = pd.pivot_table(pvalues, index='centre',
-                                columns='variable_test', values='pval')\
-                   .dropna(axis=1)
+                                columns='variable_test', values='pval')#.dropna(axis=1)
     X_pvalues_ = X_pvalues_.loc[:, ~X_pvalues_.columns.duplicated()]
+    sample_missingness = (pd.isnull(X_pvalues_).sum(axis=1) / X_pvalues_.shape[1])
+    X_pvalues_ = X_pvalues_[sample_missingness < 0.5].dropna(axis=1)
+    eps = np.finfo(np.float64).eps
+    X_pvalues_ = np.log10(X_pvalues_ + eps)
     X_pvalues, y_pvalues = get_labelled(X_pvalues_)
     X_mmd, y_mmd = get_labelled(mmd_features)
 
     return X_pvalues, X_mmd, y_pvalues, y_mmd
 
-def get_predictions(X, y):
-    svm = OneClassSVM(kernel='rbf', gamma='auto').fit(X)
+def get_predictions(X, y, ktype):
+    svm = OneClassSVM(kernel=ktype, gamma='auto').fit(X)
     y_pred = svm.predict(X)
     y_pred = ((1 - y_pred) / 2).astype(int)
     y_score = -svm.decision_function(X)
@@ -79,10 +82,10 @@ if __name__ == '__main__':
         pvalues_poise, mmd_features_poise, [141, 142, 143, 144, 551, 552, 553, 554, 555, 556]
     )
 
-    predictions_hipattack = get_predictions(X_hipattack, y_hipattack)
-    predictions_mmd_hipattack = get_predictions(X_hipattack_mmd, y_hipattack_mmd)
-    predictions_poise = get_predictions(X_poise, y_poise)
-    predictions_mmd_poise = get_predictions(X_poise_mmd, y_poise_mmd)
+    predictions_hipattack = get_predictions(X_hipattack, y_hipattack, 'poly')
+    predictions_mmd_hipattack = get_predictions(X_hipattack_mmd, y_hipattack_mmd, 'rbf')
+    predictions_poise = get_predictions(X_poise, y_poise, 'poly')
+    predictions_mmd_poise = get_predictions(X_poise_mmd, y_poise_mmd, 'rbf')
 
     print('ONE-CLASS SVM RESULTS')
     print('=====================')

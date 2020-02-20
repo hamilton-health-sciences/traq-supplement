@@ -16,8 +16,6 @@ def continuous_kernel(x):
         K : np.ndarray
             An N x N matrix of kernel values.
     '''
-
-    Parameters
     D = np.abs(np.subtract.outer(x, x))
     D[np.isnan(x), :] = np.nan
     D[:, np.isnan(x)] = np.nan
@@ -44,8 +42,17 @@ def categorical_kernel(alpha=1.0):
     '''
     # TODO: convert from functional to function
     def k(x):
-        xu = np.unique(x, return_counts=True)
-        prob = xu[1][np.argsort(xu[0])] / len(x)
+        xu, xc = np.unique(x, return_counts=True)
+        xc = xc[np.argsort(xu)]
+        xu_new = np.arange(np.max(xu) + 1)
+        for i in xu_new:
+            if i not in xu:
+                idx = np.min(np.where(xu > i)[0])
+                xc = np.insert(xc, idx, 0)
+                print(xu)
+                print(xu_new)
+                print(xc)
+        prob = xc / len(x)
         K = np.tile(x, (len(x), 1))
         K = (1 - prob[K]**alpha)**(1 / alpha)
         K[np.not_equal.outer(x, x)] = 0
@@ -152,7 +159,7 @@ def centre_latent_mmd(df, K, k_mds=8, include_global=True, use_pvals=False):
         k_mds : int
             The number of dimensions to be used when running multi-dimensional
             scaling on the MMD distance matrix.
-        include_global : boolean
+        mnclude_global : boolean
             Whether or not to include the center-to-global MMD as a feature.
         use_pvals : boolean
             Whether to transform the MMD distances to p-values, which considers

@@ -7,6 +7,18 @@ from load_data import load_sas_study
 from summary_statistics import output_predictive_model_stats
 
 def get_proportions(results, thresh):
+    '''Get proportion of p-values under a given threshold.
+
+    Parameters:
+        results : pd.DataFrame
+            Data frame containing a column 'pval'.
+        thresh : float
+            p-value threshold.
+
+    Returns:
+        result : pd.DataFrame
+            DataFrame with a single column 'pval_prop' indexed by centre.
+    '''
     result = (results['pval'] < thresh).groupby('centre').mean().to_frame()
     result.columns = ['pval_prop']
 
@@ -14,6 +26,23 @@ def get_proportions(results, thresh):
 
 def proportions_and_predictions(results, pval_thresh, prop_thresh,
                                 anomalous_centres):
+    '''Get labeled scores and predictions for the p-value approach.
+
+    Parameters:
+        results : pd.DataFrame
+            Data frame containing the p-value results.
+        pval_thresh : float
+            The p-value threshold used to generate the proportions.
+        prop_thresh : float
+            The proportion threshold used as a decision boundary.
+        anomalous_centres : list-like
+            List of anomalous centre IDs.
+
+    Returns:
+        prop : pd.Dataframe
+            Data frame containing the scores, the predictions, and the labels
+            for the p-value approach.
+    '''
     prop = get_proportions(results, pval_thresh)
     prop['pval_pred'] = (prop > prop_thresh)
     prop['anomalous'] = False
@@ -22,8 +51,17 @@ def proportions_and_predictions(results, pval_thresh, prop_thresh,
     return prop
 
 def output_statistics(df):
+    '''Output summary statistics for the p-value model to the terminal.
+
+    Parameters:
+        df : pd.DataFrame
+            Data frame containing the proportion scores and the labels.
+    '''
     auroc = roc_auc_score(df['anomalous'], df['pval_prop'])
     aupr = average_precision_score(df['anomalous'], df['pval_prop'])
+    centres = df.index
+    num_centres = len(np.unique(centres))
+    print('\tNumber of centers: {}'.format(num_centres))
     print('\tAUROC: {:.3f}'.format(auroc))
     print('\tAUPR: {:.3f}'.format(aupr))
 

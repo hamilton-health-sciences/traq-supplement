@@ -6,6 +6,8 @@ from math import floor
 
 from functools import reduce
 
+INCLUSION_THRESHOLD = 5
+
 def load_sas(fn, schema):
     '''Load a SAS file according to the given schema.
 
@@ -112,6 +114,19 @@ def load_sas_study(root_path, impute=True):
         plates_cat = plates_cat.dropna(axis=1)
         plates_numeric = plates_numeric.fillna(-9e10)
         plates_joined = pd.concat([plates_numeric, plates_cat], axis=1)
+
+    # Remove centers with too few samples
+    sample_size = plates_joined.reset_index().set_index('centre').groupby('centre')['id'].nunique().to_frame()
+    sample_size.columns = ['sample_size']
+    centres = sample_size[sample_size['sample_size'] >= INCLUSION_THRESHOLD].index
+    plates_joined = plates_joined[plates_joined.index.get_level_values(0).isin(centres)]
+    anomalies = anomalies[anomalies.index.get_level_values(0).isin(centres)]
+
+    # Remove time-based variables (bias)
+    admin_variable_names = np.loadtxt('admin_variable_names.txt', dtype=str)
+    plates_joined = plates_joined[
+        [c for c in plates_joined.columns if not c in admin_variable_names]
+    ]
     
     return schema, plates_joined, anomalies
 

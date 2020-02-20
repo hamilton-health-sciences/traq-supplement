@@ -140,7 +140,7 @@ def correlation_difference(X, Y):
     
     return pval / nbootstrap
 
-def multivariate_equality_of_means(X, Y):
+def multivariate_equality_of_ranks(X, Y):
     '''Perform a multivariate Kruskal-Wallis test on X and Y.
     Reference: doi:10.1080/03610926.2016.1146767
     
