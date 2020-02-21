@@ -87,13 +87,21 @@ if __name__ == '__main__':
     varnames_hipattack = schema_hipattack[
         schema_hipattack['Plate'].isin([1, 2, 3, 4, 5, 6, 7, 23, 24, 102, 106])
     ].index
-    varnames_poise = schema_poise[schema_poise['Plate'].isin([1, 2, 3, 4, 5, 102])].index
+    varnames_poise = schema_poise[
+        schema_poise['Plate'].isin([1, 2, 3, 4, 5, 102])
+    ].index
 
-    pvalues_hipattack = pd.read_csv('output/hipattack_p_values.csv').set_index('centre')
-    pvalues_poise = pd.read_csv('output/poise_p_values.csv').set_index('centre')
+    pvalues_hipattack = pd.read_csv('output/hipattack_p_values.csv')\
+                          .set_index('centre')
+    pvalues_poise = pd.read_csv('output/poise_p_values.csv')\
+                      .set_index('centre')
 
-    pvalues_hipattack = pvalues_hipattack[pvalues_hipattack['variable'].isin(varnames_hipattack)]
-    pvalues_poise = pvalues_poise[pvalues_poise['variable'].isin(varnames_poise)]
+    pvalues_hipattack = pvalues_hipattack[
+        pvalues_hipattack['variable'].isin(varnames_hipattack)
+    ]
+    pvalues_poise = pvalues_poise[
+        pvalues_poise['variable'].isin(varnames_poise)
+    ]
 
     exclude = []
     if not args.include_missingness:
@@ -101,24 +109,32 @@ if __name__ == '__main__':
     if not args.include_ks:
         exclude.append('ks')
 
-    pvalues_hipattack = pvalues_hipattack[~pvalues_hipattack['test'].isin(exclude)]
+    pvalues_hipattack = pvalues_hipattack[
+        ~pvalues_hipattack['test'].isin(exclude)
+    ]
     pvalues_poise = pvalues_poise[~pvalues_poise['test'].isin(exclude)]
 
-    mmd_features_hipattack = pd.read_csv('output/mmd_features_hipattack_pvals.csv').set_index('centre')
-    mmd_features_poise = pd.read_csv('output/mmd_features_poise_pvals.csv').set_index('centre')
+    mmd_features_hipattack = pd.read_csv(
+        'output/mmd_features_hipattack_pvals.csv'
+    ).set_index('centre')
+    mmd_features_poise = pd.read_csv(
+        'output/mmd_features_poise_pvals.csv'
+    ).set_index('centre')
 
     X_hipattack, X_hipattack_mmd, y_hipattack, y_hipattack_mmd = extract_labelled_data(
         pvalues_hipattack, mmd_features_hipattack, [43, 216, 530]
     )
     print('HIPATTACK shape: {} x {}'.format(*X_hipattack.shape))
     X_poise, X_poise_mmd, y_poise, y_poise_mmd = extract_labelled_data(
-        pvalues_poise, mmd_features_poise, [141, 142, 143, 144, 551, 552, 553, 554, 555, 556]
+        pvalues_poise, mmd_features_poise,
+        [141, 142, 143, 144, 551, 552, 553, 554, 555, 556]
     )
     print('POISE shape: {} x {}'.format(*X_poise.shape))
 
     predictions_hipattack = get_predictions(X_hipattack, y_hipattack, 'poly')
     predictions_hipattack.to_csv('output/method_2_hipattack_results.csv')
-    predictions_mmd_hipattack = get_predictions(X_hipattack_mmd, y_hipattack_mmd, 'rbf')
+    predictions_mmd_hipattack = get_predictions(X_hipattack_mmd,
+                                                y_hipattack_mmd, 'rbf')
     predictions_poise = get_predictions(X_poise, y_poise, 'poly')
     predictions_poise.to_csv('output/method_2_poise_results.csv')
     predictions_mmd_poise = get_predictions(X_poise_mmd, y_poise_mmd, 'rbf')

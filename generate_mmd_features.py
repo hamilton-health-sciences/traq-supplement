@@ -136,12 +136,17 @@ def compute_mmd(df, K):
     mmd2_global = np.zeros((len(unique_centres)))
     for i, ci in enumerate(unique_centres):
         sel_i = (centre == ci)
-        mmd2_global[i] = np.mean(K[sel_i, :][:, sel_i]) - 2 * np.mean(K[~sel_i, :][:, sel_i]) + np.mean(K[~sel_i, :][:, ~sel_i])
+        mmd2_global[i] = np.mean(K[sel_i, :][:, sel_i]) - \
+                         2 * np.mean(K[~sel_i, :][:, sel_i]) + \
+                         np.mean(K[~sel_i, :][:, ~sel_i])
         for j, cj in enumerate(unique_centres):
             sel_j = (centre == cj)
-            mmd2[i, j] = np.mean(K[sel_i, :][:, sel_i]) - 2 * np.mean(K[sel_i, :][:, sel_j]) + np.mean(K[sel_j, :][:, sel_j])
+            mmd2[i, j] = np.mean(K[sel_i, :][:, sel_i]) - \
+                         2 * np.mean(K[sel_i, :][:, sel_j]) + \
+                         np.mean(K[sel_j, :][:, sel_j])
             m = np.min([np.sum(sel_i), np.sum(sel_j)])
-            pvals[i, j] = 1 / np.exp((np.sqrt(mmd2[i, j]) * np.sqrt(m / (2 * kmax)) - 1)**2 / 2)
+            pvals[i, j] = 1 / np.exp((np.sqrt(mmd2[i, j]) * \
+                          np.sqrt(m / (2 * kmax)) - 1)**2 / 2)
     mmd2[mmd2 < 0] = 0
     mmd = np.sqrt(mmd2)
     mmd_global = np.sqrt(mmd2_global)
@@ -161,7 +166,7 @@ def centre_latent_mmd(df, K, k_mds=8, include_global=True, use_pvals=False):
         k_mds : int
             The number of dimensions to be used when running multi-dimensional
             scaling on the MMD distance matrix.
-        mnclude_global : boolean
+        include_global : boolean
             Whether or not to include the center-to-global MMD as a feature.
         use_pvals : boolean
             Whether to transform the MMD distances to p-values, which considers
@@ -180,7 +185,10 @@ def centre_latent_mmd(df, K, k_mds=8, include_global=True, use_pvals=False):
     if include_global:
         X_mmd = np.concatenate([X_mmd, mmd_global[:, np.newaxis]], axis=1)
         cols += ['mmd_global']
-    result = pd.DataFrame(np.concatenate([unique_centres[:, np.newaxis], X_mmd], axis=1), columns=cols)
+    result = pd.DataFrame(
+        np.concatenate([unique_centres[:, np.newaxis], X_mmd], axis=1),
+        columns=cols
+    )
     result['centre'] = result['centre'].astype(int)
     result = result.set_index('centre')
 
@@ -201,9 +209,11 @@ if __name__ == '__main__':
     if path.exists('output/kernel_hipattack.npz'):
         K_hipattack = np.load('output/kernel_hipattack.npz')['arr_0']
     else:
-        K_hipattack = compute_aggregate_kernel(data_hipattack,
-                                               [1, 2, 3, 4, 5, 6, 7, 23, 24, 102, 106],
-                                               schema_hipattack)
+        K_hipattack = compute_aggregate_kernel(
+            data_hipattack,
+            [1, 2, 3, 4, 5, 6, 7, 23, 24, 102, 106],
+            schema_hipattack
+        )
         np.savez('output/kernel_hipattack.npz', K_hipattack)
 
     if path.exists('output/kernel_poise.npz'):
@@ -215,12 +225,20 @@ if __name__ == '__main__':
         np.savez('output/kernel_poise.npz', K_poise)
 
     mmd_features_hipattack = centre_latent_mmd(data_hipattack, K_hipattack)
-    mmd_features_hipattack_pvals = centre_latent_mmd(data_hipattack, K_hipattack, use_pvals=True)
+    mmd_features_hipattack_pvals = centre_latent_mmd(data_hipattack,
+                                                     K_hipattack,
+                                                     use_pvals=True)
     mmd_features_poise = centre_latent_mmd(data_poise, K_poise)
-    mmd_features_poise_pvals = centre_latent_mmd(data_poise, K_poise, use_pvals=True)
+    mmd_features_poise_pvals = centre_latent_mmd(data_poise,
+                                                 K_poise,
+                                                 use_pvals=True)
 
     mmd_features_hipattack.to_csv('output/mmd_features_hipattack.csv')
-    mmd_features_hipattack_pvals.to_csv('output/mmd_features_hipattack_pvals.csv')
+    mmd_features_hipattack_pvals.to_csv(
+        'output/mmd_features_hipattack_pvals.csv'
+    )
     mmd_features_poise.to_csv('output/mmd_features_poise.csv')
-    mmd_features_poise_pvals.to_csv('output/mmd_features_poise_pvals.csv')
+    mmd_features_poise_pvals.to_csv(
+        'output/mmd_features_poise_pvals.csv'
+    )
 

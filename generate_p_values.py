@@ -109,9 +109,11 @@ def compute_all_tests(df):
 
 if __name__ == '__main__':
     # Load the data
-    hipattack_dataset = load_sas_study('/dhi_work/share/data/fraud/hipattack', impute=False)
+    hipattack_dataset = load_sas_study('/dhi_work/share/data/fraud/hipattack',
+                                       impute=False)
     schema_hipattack, data_hipattack, anomalies_hipattack = hipattack_dataset
-    poise_dataset = load_sas_study('/dhi_work/share/data/fraud/poise', impute=False)
+    poise_dataset = load_sas_study('/dhi_work/share/data/fraud/poise',
+                                   impute=False)
     schema_poise, data_poise, anomalies_poise = poise_dataset
 
     # Compute all statistical tests

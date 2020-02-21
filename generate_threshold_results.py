@@ -114,7 +114,8 @@ if __name__ == '__main__':
         ~pvalues_poise['test'].isin(exclude)
     ]
 
-    pvalues_hipattack = proportions_and_predictions(pvalues_hipattack, 0.05, 0.2,
+    pvalues_hipattack = proportions_and_predictions(pvalues_hipattack,
+                                                    0.05, 0.2,
                                                     [43, 216, 530])
     pvalues_poise = proportions_and_predictions(pvalues_poise, 0.05, 0.4,
                                                 [141, 142, 143, 144,
