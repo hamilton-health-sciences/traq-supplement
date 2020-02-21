@@ -41,8 +41,8 @@ def digit_preference(x):
     return pval
 
 def digit_difference(x, y, leading=True):
-    '''Performs a chi-squared test on the leading or tailing digits of x compared
-    to the distribution of those of y.
+    '''Performs a chi-squared test on the leading or tailing digits of x
+    compared to the distribution of those of y.
     
     Parameters:
         x : np.ndarray
@@ -87,7 +87,8 @@ def categorical_difference(x, y):
     return pval
 
 def missingness_test(x, y):
-    '''Performs a chi-squared test comparing the missingness distribution of x to that of y.
+    '''Performs a chi-squared test comparing the missingness distribution of x
+    to that of y.
     
     Parameters:
         x : np.ndarray
@@ -118,7 +119,8 @@ def correlation_difference(X, Y):
         X : np.ndarray
             The matrix containing observations to compare.
         Y : np.ndarray
-            The matrix containing the observations from the base distribution to compare to.
+            The matrix containing the observations from the base distribution to
+            compare to.
         
     Returns:
         pval : float
@@ -148,7 +150,8 @@ def multivariate_equality_of_ranks(X, Y):
         X : np.ndarray
             The matrix containing observations to compare
         Y : np.ndarray
-            A matrix representing observations from the base distribution to compare to.
+            A matrix representing observations from the base distribution to
+            compare to.
             
     Returns:
         pval : float

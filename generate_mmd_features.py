@@ -94,7 +94,9 @@ def compute_aggregate_kernel(df, plate_subset=None, schema=None, categorical_alp
         K_sum += K_i
     cK = categorical_kernel(categorical_alpha)
     for i in range(df_categorical.shape[1]):
-        K_i = cK(np.asarray(pd.Categorical(df_categorical.iloc[:, i].cat.add_categories(-9e5).fillna(-9e5)).codes).astype(int))
+        x = df_categorical.iloc[:, i].cat.add_categories(-9e5).fillna(-9e5)
+        x = np.asarray(pd.Categorical(x).codes).astype(int)
+        K_i = cK(x)
         if (np.isnan(K_i).sum() == 0):
             K_sum += K_i
         else:
@@ -168,7 +170,6 @@ def centre_latent_mmd(df, K, k_mds=8, include_global=True, use_pvals=False):
         result : DataFrame
             A DataFrame containing the engineered features.
     '''
-
     mmd, pvals, mmd_global, unique_centres = compute_mmd(df, K)
     mds = MDS(n_components=k_mds, dissimilarity='precomputed')
     if use_pvals:
@@ -182,6 +183,7 @@ def centre_latent_mmd(df, K, k_mds=8, include_global=True, use_pvals=False):
     result = pd.DataFrame(np.concatenate([unique_centres[:, np.newaxis], X_mmd], axis=1), columns=cols)
     result['centre'] = result['centre'].astype(int)
     result = result.set_index('centre')
+
     return result
 
 if __name__ == '__main__':

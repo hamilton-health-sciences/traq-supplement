@@ -47,17 +47,19 @@ def load_sas(fn, schema):
             try:
                 df_sub[col] = df_sub[col].astype(pd.Int64Dtype())
             except:
-                print('error converting int column {}, leaving as float'.format(col))
+                msg = 'error converting int column {}, leaving as float'
+                print(msg.format(col))
                 try:
                     df_sub[col] = df_sub[col].astype(float)
                 except:
-                    print('never mind, dropping it')
+                    print('not a valid float either! dropping {}'.format(col))
                     df_sub = df_sub.drop(col, axis=1)
         elif dtypes[col] == 'choice' or dtypes[col] == 'check' :
             try:
                 df_sub[col] = pd.Categorical(df_sub[col].astype(pd.Int64Dtype()))
             except:
-                print('error converting boolean/categorical column {}, dropping it'.format(col))
+                msg = 'error converting categorical column {}, dropping it'
+                print(msg.format(col))
                 df_sub = df_sub.drop(col, axis=1)
         elif dtypes[col] == 'string' or dtypes[col] == 'date':
             df_sub = df_sub.drop(col, axis=1)
@@ -91,24 +93,32 @@ def load_sas_study(root_path, impute=True):
     anomalies = pd.read_csv(anomalies_path)
     schema = pd.read_csv(schema_path).set_index('Name')
     plates = [load_sas(fn, schema) for fn in plates_paths]
-    uniq_pids = np.unique(np.concatenate([np.asarray(plate.index.get_level_values(1))
-                                          for plate in plates if len(plate.columns) > 0]))
+    uniq_pids = np.unique(
+        np.concatenate([np.asarray(plate.index.get_level_values(1))
+                        for plate in plates if len(plate.columns) > 0])
+    )
     nonanom_pids = np.setdiff1d(uniq_pids, anomalies['id'])
     anomalies = pd.concat([
         anomalies,
-        pd.DataFrame({'id': nonanom_pids, 'centre': nonanom_pids // 1000, 'fraud': [0] * len(nonanom_pids)})
+        pd.DataFrame({'id': nonanom_pids,
+                      'centre': nonanom_pids // 1000,
+                      'fraud': [0] * len(nonanom_pids)})
     ], axis=0)
     anomalies['centre'] = anomalies['id'] // 1000
     anomalies['anomalous'] = (anomalies['fraud'] == 1)
     anomalies = anomalies.drop('fraud', axis=1).set_index(['centre', 'id'])
-    plates_joined = reduce(lambda x, y: x.merge(y, on=['centre', 'id'], how='outer'),
-                           [p for p in plates if len(p.columns) > 0])
+    plates_joined = reduce(
+        lambda x, y: x.merge(y, on=['centre', 'id'], how='outer'),
+        [p for p in plates if len(p.columns) > 0]
+    )
     if impute:
-        plates_numeric = plates_joined.select_dtypes(include=['int', 'float']).astype(float)
+        plates_numeric = plates_joined.select_dtypes(include=['int', 'float'])\
+                                      .astype(float)
         plates_cat = plates_joined.select_dtypes(include=['category'])
         for c in plates_cat.columns:
             try:
-                plates_cat[c] = plates_cat[c].cat.add_categories(-9e10).fillna(-9e10)
+                plates_cat[c] = plates_cat[c].cat.add_categories(-9e10)\
+                                             .fillna(-9e10)
             except:
                 print('failed imputing on column {}, will drop'.format(c))
         plates_cat = plates_cat.dropna(axis=1)
@@ -116,20 +126,19 @@ def load_sas_study(root_path, impute=True):
         plates_joined = pd.concat([plates_numeric, plates_cat], axis=1)
 
     # Remove centers with too few samples
-    sample_size = plates_joined.reset_index().set_index('centre').groupby('centre')['id'].nunique().to_frame()
+    sample_size = plates_joined.reset_index().set_index('centre')\
+                               .groupby('centre')['id'].nunique().to_frame()
     sample_size.columns = ['sample_size']
-    centres = sample_size[sample_size['sample_size'] >= INCLUSION_THRESHOLD].index
-    plates_joined = plates_joined[plates_joined.index.get_level_values(0).isin(centres)]
+    centres = sample_size[sample_size['sample_size'] >= INCLUSION_THRESHOLD]\
+                .index
+    plates_joined = plates_joined[
+        plates_joined.index.get_level_values(0).isin(centres)
+    ]
     anomalies = anomalies[anomalies.index.get_level_values(0).isin(centres)]
 
-    # Remove admin variables (bias)
-    admin_variable_names = np.loadtxt('admin_variable_names.txt', dtype=str)
-    print('before: {} x {}'.format(*plates_joined.shape))
-    #plates_joined = plates_joined[
-    #    [c for c in plates_joined.columns if c not in admin_variable_names]
-    #]
+    # Remove admin variables
+    admin_variable_names = np.loadtxt('output/admin_variable_names.txt', dtype=str)
     plates_joined = plates_joined.drop(np.intersect1d(plates_joined.columns, admin_variable_names), axis=1)
-    print('after: {} x {}'.format(*plates_joined.shape))
     
     return schema, plates_joined, anomalies
 

@@ -75,27 +75,44 @@ if __name__ == '__main__':
                         default=False, const=True)
     args = parser.parse_args()
 
-    schema_hipattack, _, _ = load_sas_study('/dhi_work/share/data/fraud/hipattack')
-    schema_poise, _, _ = load_sas_study('/dhi_work/share/data/fraud/poise')
+    schema_hipattack, _, _ = load_sas_study(
+        '/dhi_work/share/data/fraud/hipattack'
+    )
+    schema_poise, _, _ = load_sas_study(
+        '/dhi_work/share/data/fraud/poise'
+    )
 
     varnames_hipattack = schema_hipattack[
         schema_hipattack['Plate'].isin([1, 2, 3, 4, 5, 6, 7, 23, 24, 102, 106])
     ].index
-    varnames_poise = schema_poise[schema_poise['Plate'].isin([1, 2, 3, 4, 5, 102])].index
+    varnames_poise = schema_poise[
+        schema_poise['Plate'].isin([1, 2, 3, 4, 5, 102])
+    ].index
 
-    pvalues_hipattack = pd.read_csv('output/hipattack_p_values.csv').set_index('centre')
-    pvalues_poise = pd.read_csv('output/poise_p_values.csv').set_index('centre')
+    pvalues_hipattack = pd.read_csv('output/hipattack_p_values.csv')\
+                          .set_index('centre')
+    pvalues_poise = pd.read_csv('output/poise_p_values.csv')\
+                      .set_index('centre')
 
-    pvalues_hipattack = pvalues_hipattack[pvalues_hipattack['variable'].isin(varnames_hipattack)]
-    pvalues_poise = pvalues_poise[pvalues_poise['variable'].isin(varnames_poise)]
+    pvalues_hipattack = pvalues_hipattack[
+        pvalues_hipattack['variable'].isin(varnames_hipattack)
+    ]
+    pvalues_poise = pvalues_poise[
+        pvalues_poise['variable'].isin(varnames_poise)
+    ]
 
     exclude = []
     if not args.include_missingness:
         exclude.append('missingness')
     if not args.include_ks:
         exclude.append('ks')
-    pvalues_hipattack = pvalues_hipattack[~pvalues_hipattack['test'].isin(exclude)]
-    pvalues_poise = pvalues_poise[~pvalues_poise['test'].isin(exclude)]
+
+    pvalues_hipattack = pvalues_hipattack[
+        ~pvalues_hipattack['test'].isin(exclude)
+    ]
+    pvalues_poise = pvalues_poise[
+        ~pvalues_poise['test'].isin(exclude)
+    ]
 
     pvalues_hipattack = proportions_and_predictions(pvalues_hipattack, 0.05, 0.2,
                                                     [43, 216, 530])

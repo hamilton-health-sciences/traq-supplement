@@ -7,6 +7,25 @@ from load_data import load_sas_study
 from summary_statistics import output_predictive_model_stats
 
 def extract_labelled_data(pvalues, mmd_features, anomalous_centres):
+    '''Given the p-value and MMD features, extract the inputs to the predictive
+    models.
+
+    Parameters:
+        pvalues : DataFrame
+            Data frame containing p-values.
+        mmd_features : DataFrame
+            Data frame containing MMD features.
+
+    Returns:
+        X_pvalues : DataFrame
+            Data frame containing transformed p-value features.
+        X_mmd : DataFrame
+            Data frame containing transformed MMD features.
+        y_pvalues : pd.Series
+            Labels corresponding to the rows of X_pvalues.
+        y_mmd : pd.Series
+            Labels corresponding to the rows of X_mmd.
+    '''
     def get_labelled(X):
         X_std = StandardScaler().fit_transform(X)
         X_std = pd.DataFrame(X_std, columns=X.columns)
@@ -16,10 +35,8 @@ def extract_labelled_data(pvalues, mmd_features, anomalous_centres):
 
     pvalues['variable_test'] = pvalues['variable'] + '_' + pvalues['test']
     X_pvalues_ = pd.pivot_table(pvalues, index='centre',
-                                columns='variable_test', values='pval')#.dropna(axis=1)
+                                columns='variable_test', values='pval')
     X_pvalues_ = X_pvalues_.loc[:, ~X_pvalues_.columns.duplicated()]
-    sample_missingness = (pd.isnull(X_pvalues_).sum(axis=1) / X_pvalues_.shape[1])
-    #X_pvalues_ = X_pvalues_[sample_missingness < 0.5].dropna(axis=1)
     X_pvalues_ = X_pvalues_.dropna(axis=1)
     eps = np.finfo(np.float64).eps
     X_pvalues_ = np.log10(X_pvalues_ + eps)
@@ -29,6 +46,21 @@ def extract_labelled_data(pvalues, mmd_features, anomalous_centres):
     return X_pvalues, X_mmd, y_pvalues, y_mmd
 
 def get_predictions(X, y, ktype):
+    '''Use a one-class SVM to get irregularity predictions from the inputs.
+
+    Parameters:
+        X : DataFrame
+            input features
+        y : Series
+            labels
+        ktype : str
+            SVM kernel type
+
+    Returns:
+        result : DataFrame
+            containing the centre, its predicted label using the built-in
+            decision function, the predictive score, and the true label
+    '''
     svm = OneClassSVM(kernel=ktype, gamma='auto').fit(X)
     y_pred = svm.predict(X)
     y_pred = ((1 - y_pred) / 2).astype(int)
@@ -51,6 +83,7 @@ if __name__ == '__main__':
     schema_hipattack, _, _ = load_sas_study('/dhi_work/share/data/fraud/hipattack')
     schema_poise, _, _ = load_sas_study('/dhi_work/share/data/fraud/poise')
 
+    # Subset to plates observed for all individuals
     varnames_hipattack = schema_hipattack[
         schema_hipattack['Plate'].isin([1, 2, 3, 4, 5, 6, 7, 23, 24, 102, 106])
     ].index
@@ -73,8 +106,6 @@ if __name__ == '__main__':
 
     mmd_features_hipattack = pd.read_csv('output/mmd_features_hipattack_pvals.csv').set_index('centre')
     mmd_features_poise = pd.read_csv('output/mmd_features_poise_pvals.csv').set_index('centre')
-    #mmd_features_hipattack = pd.read_csv('/dhi_work/share/data/fraud/hipattack/mmd_features_subset_pvals.csv').set_index('centre')
-    #mmd_features_poise = pd.read_csv('/dhi_work/share/data/fraud/poise/mmd_features_subset_pvals.csv').set_index('centre')
 
     X_hipattack, X_hipattack_mmd, y_hipattack, y_hipattack_mmd = extract_labelled_data(
         pvalues_hipattack, mmd_features_hipattack, [43, 216, 530]

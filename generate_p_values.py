@@ -83,22 +83,27 @@ def compute_all_tests(df):
         schema : DataFrame
             A dataframe indexed by the variables in data with a column 'Type'.
         data : DataFrame
-            The data the tests will be performed on, with missingness coded as nan.
+            The data the tests will be performed on, with missingness coded as
+            nan.
     
     Returns:
         results : DataFrame
-            A DataFrame consisting of 4 columns: centre, variable, type of test performed, and p-value.
+            A DataFrame consisting of 4 columns: centre, variable, type of test
+            performed, and p-value.
     '''
     df_numeric = df.select_dtypes(include='number')
     df_categorical = df.select_dtypes(include='category')
     results_numeric = pd.concat(
-        [_compute_numeric_tests(df_numeric.iloc[:, i]) for i in range(df_numeric.shape[1])],
+        [_compute_numeric_tests(df_numeric.iloc[:, i])
+         for i in range(df_numeric.shape[1])],
         axis=0
     )
     results_categorical = pd.concat(
-        [_compute_categorical_tests(df_categorical.iloc[:, i]) for i in range(df_categorical.shape[1])]
+        [_compute_categorical_tests(df_categorical.iloc[:, i])
+         for i in range(df_categorical.shape[1])]
     )
-    results = pd.concat([results_numeric, results_categorical], axis=0).set_index('centre')
+    results = pd.concat([results_numeric, results_categorical], axis=0)\
+                .set_index('centre')
     
     return results
 
