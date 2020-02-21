@@ -19,7 +19,8 @@ def extract_labelled_data(pvalues, mmd_features, anomalous_centres):
                                 columns='variable_test', values='pval')#.dropna(axis=1)
     X_pvalues_ = X_pvalues_.loc[:, ~X_pvalues_.columns.duplicated()]
     sample_missingness = (pd.isnull(X_pvalues_).sum(axis=1) / X_pvalues_.shape[1])
-    X_pvalues_ = X_pvalues_[sample_missingness < 0.5].dropna(axis=1)
+    #X_pvalues_ = X_pvalues_[sample_missingness < 0.5].dropna(axis=1)
+    X_pvalues_ = X_pvalues_.dropna(axis=1)
     eps = np.finfo(np.float64).eps
     X_pvalues_ = np.log10(X_pvalues_ + eps)
     X_pvalues, y_pvalues = get_labelled(X_pvalues_)
@@ -78,13 +79,17 @@ if __name__ == '__main__':
     X_hipattack, X_hipattack_mmd, y_hipattack, y_hipattack_mmd = extract_labelled_data(
         pvalues_hipattack, mmd_features_hipattack, [43, 216, 530]
     )
+    print('HIPATTACK shape: {} x {}'.format(*X_hipattack.shape))
     X_poise, X_poise_mmd, y_poise, y_poise_mmd = extract_labelled_data(
         pvalues_poise, mmd_features_poise, [141, 142, 143, 144, 551, 552, 553, 554, 555, 556]
     )
+    print('POISE shape: {} x {}'.format(*X_poise.shape))
 
     predictions_hipattack = get_predictions(X_hipattack, y_hipattack, 'poly')
+    predictions_hipattack.to_csv('output/method_2_hipattack_results.csv')
     predictions_mmd_hipattack = get_predictions(X_hipattack_mmd, y_hipattack_mmd, 'rbf')
     predictions_poise = get_predictions(X_poise, y_poise, 'poly')
+    predictions_poise.to_csv('output/method_2_poise_results.csv')
     predictions_mmd_poise = get_predictions(X_poise_mmd, y_poise_mmd, 'rbf')
 
     print('ONE-CLASS SVM RESULTS')

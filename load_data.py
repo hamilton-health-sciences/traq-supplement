@@ -122,11 +122,14 @@ def load_sas_study(root_path, impute=True):
     plates_joined = plates_joined[plates_joined.index.get_level_values(0).isin(centres)]
     anomalies = anomalies[anomalies.index.get_level_values(0).isin(centres)]
 
-    # Remove time-based variables (bias)
+    # Remove admin variables (bias)
     admin_variable_names = np.loadtxt('admin_variable_names.txt', dtype=str)
-    plates_joined = plates_joined[
-        [c for c in plates_joined.columns if not c in admin_variable_names]
-    ]
+    print('before: {} x {}'.format(*plates_joined.shape))
+    #plates_joined = plates_joined[
+    #    [c for c in plates_joined.columns if c not in admin_variable_names]
+    #]
+    plates_joined = plates_joined.drop(np.intersect1d(plates_joined.columns, admin_variable_names), axis=1)
+    print('after: {} x {}'.format(*plates_joined.shape))
     
     return schema, plates_joined, anomalies
 
