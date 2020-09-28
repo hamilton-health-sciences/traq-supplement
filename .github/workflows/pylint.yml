@@ -21,7 +21,6 @@ jobs:
         pip install pandas
         pip install scipy
         pip install sklearn
-        pip install glob
     - name: Analysing the code with pylint
       run: |
         pylint `ls -R|grep .py$|xargs`
