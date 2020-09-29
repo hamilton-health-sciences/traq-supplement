@@ -1,4 +1,4 @@
-name: Pylint
+name: Build
 
 on: [push]
 
@@ -21,6 +21,3 @@ jobs:
         pip install pandas
         pip install scipy
         pip install sklearn
-    - name: Analysing the code with pylint
-      run: |
-        pylint `ls -R|grep .py$|xargs`
